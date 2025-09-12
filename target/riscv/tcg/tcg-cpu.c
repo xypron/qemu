@@ -684,6 +684,14 @@ void riscv_cpu_validate_set_extensions(RISCVCPU *cpu, Error **errp)
         }
     }
 
+    if (cpu->cfg.ext_zvl128b || cpu->cfg.ext_zvl256b ||
+        cpu->cfg.ext_zvl512b || cpu->cfg.ext_zvl1024b) {
+        if (!riscv_has_ext(env, RVV)) {
+            error_setg(errp, "Zvl###b extensions require V extension");
+            return;
+        }
+    }
+
     if (cpu->cfg.ext_zvfhmin && !cpu->cfg.ext_zve32f) {
         error_setg(errp, "Zvfh/Zvfhmin extensions require Zve32f extension");
         return;
