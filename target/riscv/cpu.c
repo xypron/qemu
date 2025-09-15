@@ -900,9 +900,35 @@ static void riscv_cpu_satp_mode_finalize(RISCVCPU *cpu, Error **errp)
 }
 #endif
 
+static void riscv_cpu_vlen_finalize(RISCVCPU *cpu)
+{
+    if (cpu->cfg.ext_zvl1024b && cpu->cfg.vlenb < 128)
+        cpu->cfg.vlenb = 128;
+    else if (cpu->cfg.ext_zvl512b && cpu->cfg.vlenb < 64)
+        cpu->cfg.vlenb = 64;
+    else if (cpu->cfg.ext_zvl256b && cpu->cfg.vlenb < 32)
+        cpu->cfg.vlenb = 32;
+    else if (cpu->cfg.ext_zvl128b && cpu->cfg.vlenb < 16)
+        cpu->cfg.vlenb = 16;
+
+    if (!(cpu->misa_ext & RVV))
+        return;
+
+    if (cpu->cfg.vlenb >= 128)
+        cpu->cfg.ext_zvl1024b = true;
+    if (cpu->cfg.vlenb >= 64)
+        cpu->cfg.ext_zvl512b = true;
+    if (cpu->cfg.vlenb >= 32)
+        cpu->cfg.ext_zvl256b = true;
+    if (cpu->cfg.vlenb >= 16)
+        cpu->cfg.ext_zvl128b = true;
+}
+
 void riscv_cpu_finalize_features(RISCVCPU *cpu, Error **errp)
 {
     Error *local_err = NULL;
+
+    riscv_cpu_vlen_finalize(cpu);
 
 #ifndef CONFIG_USER_ONLY
     riscv_cpu_satp_mode_finalize(cpu, &local_err);
